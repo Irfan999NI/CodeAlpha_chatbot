@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pasha Poultries FAQ Chatbot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        /* Custom scrollbar for chat window */
+        .chat-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .chat-scroll::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 10px;
+        }
+        .typing-indicator span {
+            animation: blink 1.4s infinite both;
+            height: 6px;
+            width: 6px;
+            background-color: #3b82f6;
+            border-radius: 50%;
+            display: inline-block;
+            margin: 0 1px;
+        }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes blink {
+            0% { opacity: 0.2; transform: scale(0.8); }
+            20% { opacity: 1; transform: scale(1.2); }
+            100% { opacity: 0.2; transform: scale(0.8); }
+        }
+    </style>
+</head>
+<body class="h-screen w-full flex items-center justify-center bg-gray-100 p-4">
+
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-200 flex flex-col h-[600px] max-h-full overflow-hidden relative">
+        
+        <!-- Header -->
+        <div class="bg-green-600 text-white px-6 py-4 flex items-center shadow-md z-10">
+            <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-green-600 font-bold text-xl mr-3 shadow-inner">
+                🐔
+            </div>
+            <div>
+                <h1 class="font-semibold text-lg">Pasha Poultries Bot</h1>
+                <p class="text-xs text-green-200">Online | Ask me anything!</p>
+            </div>
+        </div>
+
+        <!-- Chat History Area -->
+        <div id="chat-history" class="flex-1 p-4 overflow-y-auto chat-scroll flex flex-col gap-4 bg-gray-50">
+            <!-- Bot Welcome Message -->
+            <div class="flex items-start max-w-[85%]">
+                <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 text-sm mr-2 flex-shrink-0">🐔</div>
+                <div class="bg-white border border-gray-200 p-3 rounded-2xl rounded-tl-none shadow-sm text-sm text-gray-800">
+                    Welcome to Pasha Poultries! 👋 I'm your virtual assistant. You can ask me about our birds, minimum orders, delivery, feed, and more. How can I help you today?
+                </div>
+            </div>
+        </div>
+
+        <!-- Typing Indicator (Hidden by default) -->
+        <div id="typing-indicator" class="hidden absolute bottom-[72px] left-4 bg-white border border-gray-200 px-3 py-2 rounded-full shadow-sm items-center">
+            <div class="typing-indicator flex">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="p-4 bg-white border-t border-gray-200">
+            <form id="chat-form" class="flex items-center gap-2">
+                <input type="text" id="user-input" autocomplete="off" placeholder="Type your question..." 
+                    class="flex-1 bg-gray-100 text-sm border-transparent focus:bg-white focus:border-green-500 focus:ring-2 focus:ring-green-200 rounded-full px-4 py-3 outline-none transition-all">
+                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white rounded-full w-12 h-12 flex items-center justify-center transition-colors shadow-md flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * ==========================================
+         * PASHA POULTRIES - NLP CHATBOT ENGINE
+         * ==========================================
+         * A client-side Natural Language Processing (NLP) pipeline.
+         * Utilizes Bag-of-Words (BoW) and Cosine Similarity.
+         * 
+         * Designed for professional deployment and GitHub portfolio.
+         */
+
+        // 1. DATA COLLECTION: Comprehensive & Professional FAQs
+        const faqs = [
+            // --- Core Products & Orders ---
+            { question: "What types of poultry do you supply?", answer: "We proudly supply high-quality broiler chickens, egg-laying hens (layers), free-range birds, and day-old turkey poults." },
+            { question: "What is your minimum order quantity or MOQ?", answer: "Our wholesale minimum order quantity (MOQ) is 500 birds to ensure efficient logistics and competitive pricing." },
+            { question: "How do I place an order or buy birds?", answer: "Orders can be placed via our dedicated B2B portal, by emailing sales@pashapoultries.com, or calling our wholesale hotline." },
+            { question: "Do you offer volume discounts for large commercial farms?", answer: "Yes, we offer tiered volume discounts for orders exceeding 5,000, 10,000, and 50,000 birds. Contact an account manager for a custom quote." },
+            
+            // --- Delivery & Logistics ---
+            { question: "Do you offer delivery services? Can you ship?", answer: "We offer specialized, climate-controlled delivery within a 500-mile radius. We utilize custom fleet vehicles to minimize transit stress." },
+            { question: "What is your Dead on Arrival (DOA) policy or refund policy?", answer: "We provide a 99% live arrival guarantee. If transit mortality exceeds 1%, please document with photos and notify us within 24 hours for account credit." },
+            { question: "How are day-old chicks packaged for transport?", answer: "Chicks are transported in reinforced, highly ventilated, stackable transport crates within strict temperature and humidity-controlled environments." },
+            { question: "Do you export internationally?", answer: "Currently, we only service domestic commercial farms. However, we are in the process of acquiring export certifications for neighboring countries." },
+
+            // --- Health, Genetics & Feed ---
+            { question: "Are your birds vaccinated against diseases?", answer: "All day-old chicks undergo a comprehensive vaccination program against Marek's, Newcastle, and Infectious Bronchitis prior to dispatch." },
+            { question: "What is your policy on antibiotics usage?", answer: "We adhere strictly to a 'No Antibiotics Ever' (NAE) program for our premium lines. We prioritize probiotics and gut health management." },
+            { question: "What specific breeds of broilers and layers do you offer?", answer: "For broilers, we supply Ross 308 and Cobb 500. For layers, we provide ISA Brown and Hy-Line Brown, optimized for specific market needs." },
+            { question: "What is the expected Feed Conversion Ratio (FCR) of your broilers?", answer: "Under optimal management, our Ross 308 broilers achieve an industry-leading FCR of 1.45 to 1.55 by day 35." },
+            { question: "What kind of feed do you use for your chickens?", answer: "We supply our parent stock with custom-milled, locally sourced corn/soy feed enriched with phytase and essential amino acids." },
+            { question: "Are your poultry farms organic or free-range certified?", answer: "We offer dedicated lines of USDA Certified Organic and Global Animal Partnership (GAP) Step 3 certified free-range birds." },
+
+            // --- Biosecurity & Sustainability ---
+            { question: "Do you have biosecurity measures in place?", answer: "Biosecurity is paramount. We enforce strict Danish entry systems, mandatory vehicle sanitation, and rigorous pathogen testing (including Salmonella and AI)." },
+            { question: "What are your sustainability and environmental practices?", answer: "We utilize solar energy for hatchery operations, employ zero-waste water recycling, and convert poultry litter into organic agricultural fertilizer." },
+
+            // --- Support & Partnerships ---
+            { question: "Do you provide veterinary or technical support after purchase?", answer: "Yes, our wholesale partners receive complimentary access to our agronomists and veterinary team for flock health and environmental consulting." },
+            { question: "Can I trace the origin of the birds I purchase?", answer: "Yes, our blockchain-integrated tracking system ensures 100% farm-to-flock traceability, allowing you to trace parent stock origins easily." },
+            { question: "Do you offer contract farming or grower partnership opportunities?", answer: "We actively partner with independent contract growers. Please review our facility requirements and apply via partners@pashapoultries.com." },
+            { question: "What are your payment terms?", answer: "Standard terms are 30% deposit upon order, balance due 3 days prior to delivery. Net-30 credit terms are available for established partners pending a credit check." }
+        ];
+
+        class NLPEngine {
+            constructor(faqDataset) {
+                this.faqs = faqDataset;
+                this.vocabulary = [];
+                // Stopwords: Common words that don't add semantic value
+                this.stopWords = new Set(["i", "me", "my", "we", "our", "you", "your", "he", "him", "his", "she", "her", "it", "they", "them", "what", "which", "who", "whom", "this", "that", "am", "is", "are", "was", "were", "be", "been", "have", "has", "had", "do", "does", "did", "a", "an", "the", "and", "but", "if", "or", "because", "as", "until", "while", "of", "at", "by", "for", "with", "about", "to", "from", "in", "out", "on", "off", "where", "why", "how", "all", "any", "no", "not", "so", "than", "too", "very", "can", "will", "just", "should", "now", "tell", "know", "please"]);
+                
+                this.initializeEngine();
+            }
+
+            // Text Preprocessing: Clean, Tokenize, and Filter
+            preprocess(text) {
+                let cleaned = text.toLowerCase().replace(/[^\w\s]|_/g, "").replace(/\s+/g, " ");
+                let tokens = cleaned.split(" ").filter(word => !this.stopWords.has(word) && word.trim() !== "");
+                return tokens;
+            }
+
+            // Build Bag of Words Vocabulary
+            initializeEngine() {
+                let allTokens = new Set();
+                this.faqs.forEach(faq => {
+                    faq.tokens = this.preprocess(faq.question);
+                    faq.tokens.forEach(token => allTokens.add(token));
+                });
+                this.vocabulary = Array.from(allTokens);
+
+                // Pre-calculate vectors for all FAQs
+                this.faqs.forEach(faq => {
+                    faq.vector = this.textToVector(faq.tokens);
+                });
+            }
+
+            // Convert token array into numerical vector
+            textToVector(tokens) {
+                const vector = new Array(this.vocabulary.length).fill(0);
+                tokens.forEach(token => {
+                    const index = this.vocabulary.indexOf(token);
+                    if (index !== -1) vector[index] += 1;
+                });
+                return vector;
+            }
+
+            // Calculate Cosine Similarity between two vectors
+            calculateCosineSimilarity(vecA, vecB) {
+                let dotProduct = 0, normA = 0, normB = 0;
+                for (let i = 0; i < vecA.length; i++) {
+                    dotProduct += vecA[i] * vecB[i];
+                    normA += vecA[i] * vecA[i];
+                    normB += vecB[i] * vecB[i];
+                }
+                if (normA === 0 || normB === 0) return 0;
+                return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+            }
+
+            // Main function to get the best answer
+            getBestMatch(userText) {
+                const userTokens = this.preprocess(userText);
+                if (userTokens.length === 0) {
+                    return "I'm sorry, I didn't quite catch that. Could you please provide more details?";
+                }
+
+                const userVector = this.textToVector(userTokens);
+                let bestMatchIndex = -1;
+                let highestSimilarity = -1;
+
+                this.faqs.forEach((faq, index) => {
+                    const similarity = this.calculateCosineSimilarity(userVector, faq.vector);
+                    if (similarity > highestSimilarity) {
+                        highestSimilarity = similarity;
+                        bestMatchIndex = index;
+                    }
+                });
+
+                // Professional fallback threshold (Requires at least some word match)
+                if (highestSimilarity > 0.15) {
+                    return this.faqs[bestMatchIndex].answer;
+                } else {
+                    return "I couldn't find an exact match for that inquiry. Please try asking about our MOQs, logistics, biosecurity, or product catalog, or contact sales@pashapoultries.com for detailed assistance.";
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Instantiate the NLP Engine
+            const chatbotEngine = new NLPEngine(faqs);
+
+            const chatHistory = document.getElementById('chat-history');
+            const chatForm = document.getElementById('chat-form');
+            const userInputBox = document.getElementById('user-input');
+            const typingIndicator = document.getElementById('typing-indicator');
+
+            function appendMessage(text, isUser) {
+                const msgDiv = document.createElement('div');
+                msgDiv.className = isUser 
+                    ? "flex items-end justify-end max-w-[85%] ml-auto"
+                    : "flex items-start max-w-[85%]";
+                
+                if (isUser) {
+                    msgDiv.innerHTML = `<div class="bg-green-600 text-white px-4 py-3 rounded-2xl rounded-tr-none shadow-sm text-sm">${text}</div>`;
+                } else {
+                    msgDiv.innerHTML = `
+                        <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 text-sm mr-2 flex-shrink-0 shadow-sm border border-green-200">🐔</div>
+                        <div class="bg-white border border-gray-200 p-3 rounded-2xl rounded-tl-none shadow-sm text-sm text-gray-800 leading-relaxed">${text}</div>
+                    `;
+                }
+                
+                chatHistory.appendChild(msgDiv);
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+            }
+
+            chatForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const text = userInputBox.value.trim();
+                if (!text) return;
+
+                appendMessage(text, true); // User message
+                userInputBox.value = '';
+                
+                typingIndicator.classList.remove('hidden');
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+
+                // Simulate network/processing delay
+                setTimeout(() => {
+                    typingIndicator.classList.add('hidden');
+                    const answer = chatbotEngine.getBestMatch(text);
+                    appendMessage(answer, false); // Bot message
+                }, 750);
+            });
+        });
+
+    </script>
+</body>
+</html>
